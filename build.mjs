@@ -20,8 +20,8 @@ const cfg = fs.existsSync(PRIVATE) ? JSON.parse(fs.readFileSync(PRIVATE, 'utf8')
 const alias = p => cfg.aliases?.[p] || p;
 
 const HEAD = /^- ((?:\[[^\]]*\]\s*)+)(.*)$/;
-const KEYS = { 'ひとこと': 'short', '場面': 'scene', '起きた': 'what', 'なぜ': 'why', 'どうした': 'did', '次に': 'next', '証拠': 'evidence' };
-const FIELDS = Object.values(KEYS);
+const KEYS = { 'ひとこと': 'short', '場面': 'scene', '予想': 'guess', '起きた': 'what', 'なぜ': 'why', '気づき': 'found', 'その後': 'after', 'どうした': 'after', 'なかま': 'kin', '次に': 'next', '証拠': 'evidence' };
+const FIELDS = [...new Set(Object.values(KEYS))];
 
 function parse(file, where, inbox) {
   const lines = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n').split('\n');
@@ -40,7 +40,7 @@ function parse(file, where, inbox) {
     if (!cur) return;
     if (!ln.trim()) { flush(); return; }
     let t = ln.trim();
-    const k = t.match(/^(ひとこと|場面|起きた|なぜ|どうした|次に|証拠)[:：]\s*/);
+    const k = t.match(new RegExp(`^(${Object.keys(KEYS).join('|')})[:：]\\s*`));
     if (k) { mode = KEYS[k[1]]; t = t.slice(k[0].length); }
     cur[mode].push(t);
   });
@@ -63,7 +63,7 @@ for (const e of entries) {
   const miss = [['見出し', e.title], ['ひとこと', e.short], ['場面', e.scene], ['起きた', e.what], ['次に', e.next], ['証拠', e.evidence]].filter(([, v]) => !v).map(([k]) => k);
   if (miss.length) warn.push(`  ${e.where} 抜け: ${miss.join('・')}`);
   if (e.short && [...e.short].length > 30) warn.push(`  ${e.where} ひとことが30字超え（${[...e.short].length}字）`);
-  const bad = ['title', 'short', 'scene', 'what', 'why', 'did', 'next'].map(k => (e[k] || '').match(JARGON)).filter(Boolean).map(m => m[0]);
+  const bad = ['title', 'short', 'scene', 'guess', 'what', 'why', 'found', 'after', 'next'].map(k => (e[k] || '').match(JARGON)).filter(Boolean).map(m => m[0]);
   if (bad.length) warn.push(`  ${e.where} 本文に内部の名前: ${bad.join(' ')}`);
 }
 
@@ -73,8 +73,22 @@ const built = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
 // 図鑑に出すのは公開してよい項目だけ。証拠の中身・ファイルの場所は載せない
 const LABEL = { '全般': 'どの開発でも', 'ai-dev-zukan': 'この図鑑づくり' };
 const label = p => LABEL[p] || '開発中の3Dゲーム';
-const pub = entries.map(({ no, date, tags, title, short, section, scene, what, why, did, next, evidence, project }) =>
-  ({ no, date, tags, title, short, section, scene, what, why, did, next, hasEvidence: !!evidence, label: label(project) }));
+// アプリの説明（公開してよい言い方だけ。名前は出さない）。解説の「このアプリ」に出る
+const APPS = {
+  'game-a': '群れを率いて走る3Dゲーム（開発中）。道にあるゲートを通ると、味方の人数が足し算・掛け算で増える。障害物や敵にぶつかると減る。途中でライバルの群れやボスと戦い、ゴールでは人数を使って段を登る。',
+  'ai-dev-zukan': 'この図鑑そのもの。AIが書きためた失敗の記録を、人が読める図鑑のページにして、公開できる形にしている。',
+};
+// 「なかま」は見出しで書く。番号に直して、見つからなければ警告する
+const noOf = new Map(entries.map(e => [e.title, e.no]));
+const kinOf = e => (e.kin || '').split(/\s*／\s*/).filter(Boolean).map(t => {
+  if (!noOf.has(t)) warn.push(`  ${e.where} なかまが見つからない: ${t}`);
+  return noOf.get(t);
+}).filter(Boolean);
+const pub = entries.map(e => ({
+  no: e.no, date: e.date, tags: e.tags, title: e.title, short: e.short, section: e.section,
+  scene: e.scene, guess: e.guess, what: e.what, why: e.why, found: e.found, after: e.after, next: e.next,
+  kin: kinOf(e), app: APPS[e.project] || '', hasEvidence: !!e.evidence, label: label(e.project),
+}));
 // カードの絵（illust/out/ の SVG）。見出しから作ったファイル名で探す（illust/render.mjs の fileOf と同じ計算）
 const svgOf = title => path.join(HERE, 'illust', 'out', crypto.createHash('sha1').update(title).digest('hex').slice(0, 10) + '.svg');
 let noPic = 0;

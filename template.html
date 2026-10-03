@@ -63,6 +63,7 @@ section.group h2 small{font-family:var(--f-body);font-size:13px;color:var(--sub)
 .sheet .pic{width:100%;margin:0;border:1px solid var(--line);border-radius:12px}
 .animal{font-size:13px;color:var(--sub);background:var(--gray-soft);border-radius:8px;padding:8px 10px}
 .animal b{color:var(--ink)}
+.kin{display:block;text-align:left;background:none;border:none;padding:2px 0;color:var(--leaf);text-decoration:underline;text-underline-offset:3px}
 .toc .who{font-size:12px;color:var(--sub);margin-left:4px}
 .spec:hover{border-color:var(--ink)}
 .spec:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
@@ -160,7 +161,7 @@ const secId = sec => 's' + DATA.sections.indexOf(sec);
 let shown = E, cur = 0;
 function render(){
   const q = document.getElementById('q').value.trim().toLowerCase();
-  shown = !q ? E : E.filter(e => [e.title,e.short,e.scene,e.what,e.why,e.did,e.next].join(' ').toLowerCase().includes(q));
+  shown = !q ? E : E.filter(e => [e.title,e.short,e.scene,e.guess,e.what,e.why,e.found,e.after,e.next].join(' ').toLowerCase().includes(q));
   document.getElementById('list').innerHTML = shown.length ? DATA.sections.map(sec => {
     const xs = shown.filter(e => e.section === sec); if (!xs.length) return '';
     return `<section class="group" id="${secId(sec)}"><h2>${icon(sec)}${esc(sec)}<small>${xs.length}種</small></h2><div class="grid">${xs.map(e =>
@@ -184,7 +185,9 @@ function open(no){
     ${e.pic ? `<img class="pic" src="${e.pic}" alt="">` : ''}
     <h3 id="dlgTitle">${md(e.title)}</h3>
     <div class="short">${md(e.short || '')}</div>
-    ${f('scene','どんな場面？')}${f('what','何が起きた？')}${f('why','なぜ？')}${f('did','どうした？')}
+    ${e.app ? `<div class="animal"><b>このアプリ</b>　${esc(e.app)}</div>` : ''}
+    ${f('scene','どんな場面？')}${f('guess','AIの予想（最初はこう考えていた）')}${f('what','実際に起きたこと')}${f('why','なぜ？')}${f('found','どうやって気づいた？')}${f('after','その後')}
+    ${e.kin && e.kin.length ? `<div class="field"><span class="label">なかま（つながっている失敗）</span><p>${e.kin.map(n => { const k = E.find(x => x.no === n); return `<button type="button" class="kin" data-no="${n}">${no3(n)} ${esc(k ? k.title : '')}</button>`; }).join('')}</p></div>` : ''}
     ${e.next ? `<div class="field next"><span class="label">次に会ったら</span><p>${md(e.next)}</p></div>` : ''}
     ${DATA.animals[e.section] ? `<div class="animal">この分類のいきもの：<b>${esc(DATA.animals[e.section].name)}</b>　${esc(DATA.animals[e.section].why)}</div>` : ''}
     ${e.hasEvidence ?`<div class="ev">出典：非公開の開発記録（コード・計測ログ）に残っています</div>` : ''}`;
@@ -204,5 +207,6 @@ document.getElementById('prev').onclick = () => open(shown[cur-1].no);
 document.getElementById('next').onclick = () => open(shown[cur+1].no);
 document.getElementById('close').onclick = () => document.getElementById('dlg').close();
 document.getElementById('dlg').addEventListener('click', ev => { if (ev.target.id === 'dlg') ev.target.close(); });
+document.getElementById('sheet').addEventListener('click', ev => { const k = ev.target.closest('.kin'); if (k) { shown = E; open(+k.dataset.no); } });
 render();
 </script>
