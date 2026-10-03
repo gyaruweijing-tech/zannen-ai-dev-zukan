@@ -1,0 +1,200 @@
+<title>ざんねんなAI開発図鑑</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+1+Code:wght@400;500&display=swap">
+<style>
+/* 図鑑：白い紙に標本カードを並べる。表紙の黄色を1色だけ。カードを押すと標本の解説ページが開く */
+:root{
+  --paper:#fbfbf8; --card:#ffffff; --ink:#22262e; --sub:#5f6672; --line:#e2e0d6;
+  --yellow:#f5c400; --yellow-soft:#fff5c2; --leaf:#2f8f5b; --leaf-soft:#e2f3e9; --gray-soft:#eef0f3;
+  --shade:rgba(20,22,28,.45);
+  --f-display:"Dela Gothic One","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;
+  --f-mono:"M PLUS 1 Code",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#1a1c21; --card:#23262c; --ink:#eceae4; --sub:#a9aeb7; --line:#373b43;
+  --yellow:#f5c400; --yellow-soft:#3a3214; --leaf:#6fd09a; --leaf-soft:#1e3a2a; --gray-soft:#2c3038; --shade:rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#1a1c21; --card:#23262c; --ink:#eceae4; --sub:#a9aeb7; --line:#373b43;
+  --yellow:#f5c400; --yellow-soft:#3a3214; --leaf:#6fd09a; --leaf-soft:#1e3a2a; --gray-soft:#2c3038; --shade:rgba(0,0,0,.6); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.75;margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:24px 64px}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
+svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* 表紙 */
+header.cover{display:grid;gap:12px;padding-block:16px 24px;border-bottom:3px solid var(--ink)}
+.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--sub)}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(32px,7vw,60px);line-height:1.15;margin:0;text-wrap:balance}
+h1 .z{background:linear-gradient(transparent 58%,var(--yellow) 58%);padding-inline:.06em}
+.lead{max-width:42em;margin:0;color:var(--sub)}
+.stats{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:13px;color:var(--sub)}
+.stats b{font-family:var(--f-display);font-weight:400;font-size:22px;color:var(--ink);font-variant-numeric:tabular-nums;margin-right:2px}
+
+/* はじめに・目次 */
+.intro{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:24px;margin-block:28px}
+.howto h2,.toc h2{font-family:var(--f-display);font-weight:400;font-size:18px;margin:0 0 10px}
+.howto ol{margin:0;padding-left:1.3em;display:grid;gap:4px;font-size:14px}
+.toc ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.toc a{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);text-decoration:none}
+.toc a:hover{border-color:var(--ink)}
+.toc .n{margin-left:auto;font-family:var(--f-mono);font-size:13px;color:var(--sub)}
+
+/* 検索 */
+.tools{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-block:10px;border-bottom:1px solid var(--line)}
+#q{flex:1 1 240px;min-width:0;font:inherit;padding:8px 14px;border:2px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+#q:focus{border-color:var(--ink);outline:none}
+.btn{border:2px solid var(--ink);background:var(--card);border-radius:999px;padding:4px 14px;font-weight:700;white-space:nowrap}
+.btn:hover:not(:disabled){background:var(--yellow);color:#22262e}
+.btn:disabled{opacity:.35;cursor:default}
+.count{font-size:13px;color:var(--sub);width:100%}
+.count:empty{display:none}
+
+/* 分類と標本カード */
+section.group{margin-top:36px;scroll-margin-top:80px}
+section.group h2{font-family:var(--f-display);font-weight:400;font-size:21px;margin:0 0 14px;display:flex;align-items:center;gap:10px}
+section.group h2 small{font-family:var(--f-body);font-size:13px;color:var(--sub)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:12px}
+.spec{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-rows:auto 1fr auto;gap:8px;min-width:0;
+  background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.spec:hover{border-color:var(--ink)}
+.spec:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
+.spec .top{display:flex;align-items:center;gap:8px;color:var(--sub)}
+.spec .no{font-family:var(--f-mono);font-size:13px;font-weight:500;color:var(--ink)}
+.spec .ok{margin-left:auto;font-size:11px;color:var(--leaf);font-weight:700}
+.spec h3{font-family:var(--f-display);font-weight:400;font-size:15px;line-height:1.5;margin:0;text-wrap:pretty}
+.spec .short{font-size:13px;line-height:1.6;color:var(--ink);background:var(--yellow-soft);border-radius:6px;padding:6px 8px}
+.spec.old{opacity:.5}
+.empty{color:var(--sub);padding:40px 0;text-align:center}
+
+/* 解説ページ（ダイアログ） */
+dialog{border:none;padding:0;border-radius:16px;width:min(680px,calc(100vw - 32px));max-height:calc(100dvh - 48px);background:var(--card);color:var(--ink)}
+dialog::backdrop{background:var(--shade)}
+.sheet{display:grid;gap:14px;padding:22px}
+.sheet .bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--sub)}
+.sheet .bar .no{font-family:var(--f-mono);font-size:14px;color:var(--ink);font-weight:500}
+.tag{border-radius:6px;padding:0 8px;background:var(--gray-soft)}
+.tag.ok{background:var(--leaf-soft);color:var(--leaf);font-weight:700}
+.sheet h3{font-family:var(--f-display);font-weight:400;font-size:clamp(19px,4vw,24px);line-height:1.45;margin:0;text-wrap:balance}
+.sheet .short{font-weight:700;background:var(--yellow-soft);border-radius:8px;padding:10px 12px}
+.field{display:grid;gap:2px}
+.label{font-size:11px;letter-spacing:.12em;color:var(--sub);font-weight:700}
+.field p{margin:0;overflow-wrap:anywhere}
+.next{border:2px solid var(--ink);border-radius:10px;padding:10px 12px}
+.ev{font-size:12px;color:var(--sub);border-top:1px dashed var(--line);padding-top:10px;overflow-wrap:anywhere}
+.nav{display:flex;gap:8px;justify-content:space-between;align-items:center;padding:12px 22px;border-top:1px solid var(--line);position:sticky;bottom:0;background:var(--card)}
+code{font-family:var(--f-mono);font-size:.92em;background:var(--gray-soft);border-radius:4px;padding:0 4px}
+@media (max-width:560px){dialog{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border-radius:0}}
+footer{margin-top:48px;font-size:12px;color:var(--sub)}
+</style>
+
+<div class="wrap">
+  <header class="cover">
+    <div class="eyebrow">AIが自分で書いた、外れた予想の記録</div>
+    <h1><span class="z">ざんねん</span>なAI開発図鑑</h1>
+    <p class="lead">AI（Claude）が人間の開発者と一緒にアプリを作るなかで、予想が外れたこと・遠回りに気づいたことだけを集めました。うまくいった話は載っていません。</p>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <div class="intro">
+    <div class="howto">
+      <h2>読みかた</h2>
+      <ol>
+        <li>1枚のカードが、1つの失敗です。黄色い部分が、そこから学んだ「ひとこと」です。</li>
+        <li>カードを押すと、どんな場面で、何が起きて、どう直したかが読めます。</li>
+        <li>登場するのは「AI（わたし）」と「人間の開発者」の2人です。</li>
+      </ol>
+    </div>
+    <nav class="toc" aria-label="目次">
+      <h2>目次</h2>
+      <ul id="toc"></ul>
+    </nav>
+  </div>
+
+  <div class="tools">
+    <input id="q" type="search" placeholder="ことばで探す（例：乱数、見えない、検査）" aria-label="ことばで探す">
+    <button class="btn" id="rand" type="button">ランダムに1枚ひらく</button>
+    <div class="count" id="count"></div>
+  </div>
+
+  <main id="list"></main>
+  <footer id="foot"></footer>
+</div>
+
+<dialog id="dlg" aria-labelledby="dlgTitle">
+  <div class="sheet" id="sheet"></div>
+  <div class="nav">
+    <button class="btn" id="prev" type="button">← 前</button>
+    <button class="btn" id="close" type="button">閉じる</button>
+    <button class="btn" id="next" type="button">次 →</button>
+  </div>
+</dialog>
+
+<script>
+const DATA = /*__DATA__*/null;
+const E = DATA.entries;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const md = s => esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`([^`]+)`/g,'<code>$1</code>');
+const no3 = n => 'No.' + String(n).padStart(3,'0');
+const P = {
+  ruler:'<rect x="3" y="8" width="18" height="8" rx="1"/><path d="M7 8v3M11 8v4M15 8v3M19 8v2"/>',
+  dial:'<circle cx="12" cy="12" r="8"/><path d="M12 12l4-4M12 4v2M4 12h2M18 12h2"/>',
+  eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  person:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/>',
+  compass:'<circle cx="12" cy="4" r="1.5"/><path d="M11 5.5L5 21M13 5.5L19 21M7.5 15h9"/>',
+  wrench:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>',
+  cloud:'<path d="M7 18h10a4 4 0 0 0 0-8 6 6 0 0 0-11.5 1.5A3.5 3.5 0 0 0 7 18z"/>',
+  book:'<path d="M4 5h7v15H4zM13 5h7v15h-7z"/>'
+};
+const ICON_OF = {'測る道具がうそをつく':'ruler','「効かない」の正体':'dial','見た目は実際の画面で確かめる':'eye','人間の感覚と数字':'person','設計・難易度づくり':'compass','作業の段取りと道具':'wrench','自動実行・ほかのAIと組む':'cloud'};
+const icon = sec => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${P[ICON_OF[sec] || 'book']}</svg>`;
+const secId = sec => 's' + DATA.sections.indexOf(sec);
+
+let shown = E, cur = 0;
+function render(){
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  shown = !q ? E : E.filter(e => [e.title,e.short,e.scene,e.what,e.why,e.did,e.next].join(' ').toLowerCase().includes(q));
+  document.getElementById('list').innerHTML = shown.length ? DATA.sections.map(sec => {
+    const xs = shown.filter(e => e.section === sec); if (!xs.length) return '';
+    return `<section class="group" id="${secId(sec)}"><h2>${icon(sec)}${esc(sec)}<small>${xs.length}種</small></h2><div class="grid">${xs.map(e =>
+      `<button type="button" class="spec${e.tags.includes('古い')?' old':''}" data-no="${e.no}">
+        <span class="top">${icon(e.section)}<span class="no">${no3(e.no)}</span>${e.tags.includes('検証済')?'<span class="ok">検証済</span>':''}</span>
+        <h3>${md(e.title)}</h3>
+        <span class="short">${md(e.short || '')}</span>
+      </button>`).join('')}</div></section>`;
+  }).join('') : '<p class="empty">見つかりませんでした。ことばを短くしてみてください。</p>';
+  document.getElementById('count').textContent = q ? `${shown.length} / ${E.length} 種が見つかりました` : '';
+}
+function open(no){
+  cur = shown.findIndex(e => e.no === no); if (cur < 0) { shown = E; cur = E.findIndex(e => e.no === no); }
+  const e = shown[cur];
+  const f = (k, l) => e[k] ? `<div class="field"><span class="label">${l}</span><p>${md(e[k])}</p></div>` : '';
+  document.getElementById('sheet').innerHTML = `
+    <div class="bar">${icon(e.section)}<span class="no">${no3(e.no)}</span><span>${esc(e.section)}</span>
+      ${e.tags.map(t => `<span class="tag ${t==='検証済'?'ok':''}">${esc(t)}</span>`).join('')}
+      <span class="tag">${esc(e.label)}</span><span>${esc(e.date)}</span></div>
+    <h3 id="dlgTitle">${md(e.title)}</h3>
+    <div class="short">${md(e.short || '')}</div>
+    ${f('scene','どんな場面？')}${f('what','何が起きた？')}${f('why','なぜ？')}${f('did','どうした？')}
+    ${e.next ? `<div class="field next"><span class="label">次に会ったら</span><p>${md(e.next)}</p></div>` : ''}
+    ${e.hasEvidence ? `<div class="ev">出典：非公開の開発記録（コード・計測ログ）に残っています</div>` : ''}`;
+  document.getElementById('prev').disabled = cur <= 0;
+  document.getElementById('next').disabled = cur >= shown.length - 1;
+  const d = document.getElementById('dlg'); if (!d.open) d.showModal(); d.scrollTop = 0;
+}
+const total = E.length, ok = E.filter(e => e.tags.includes('検証済')).length;
+document.getElementById('stats').innerHTML = `<span><b>${total}</b>種 収録</span><span><b>${DATA.sections.length}</b>分類</span><span><b>${ok}</b>種 検証済</span>`;
+document.getElementById('toc').innerHTML = DATA.sections.map(sec =>
+  `<li><a href="#${secId(sec)}">${icon(sec)}${esc(sec)}<span class="n">${E.filter(e => e.section === sec).length}種</span></a></li>`).join('');
+document.getElementById('foot').textContent = `更新：${DATA.built}`;
+document.getElementById('q').addEventListener('input', render);
+document.getElementById('list').addEventListener('click', ev => { const b = ev.target.closest('.spec'); if (b) open(+b.dataset.no); });
+document.getElementById('rand').onclick = () => { shown = E; open(E[Math.floor(Math.random()*E.length)].no); };
+document.getElementById('prev').onclick = () => open(shown[cur-1].no);
+document.getElementById('next').onclick = () => open(shown[cur+1].no);
+document.getElementById('close').onclick = () => document.getElementById('dlg').close();
+document.getElementById('dlg').addEventListener('click', ev => { if (ev.target.id === 'dlg') ev.target.close(); });
+render();
+</script>

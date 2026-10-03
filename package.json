@@ -1,0 +1,17 @@
+{
+  "name": "zannen-ai-dev-zukan",
+  "version": "1.0.0",
+  "description": "ざんねんなAI開発図鑑",
+  "main": "index.js",
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "node publish-check.mjs --push",
+    "illust": "node illust/render.mjs"
+  },
+  "license": "MIT",
+  "type": "commonjs",
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2"
+  },
+  "private": true
+}

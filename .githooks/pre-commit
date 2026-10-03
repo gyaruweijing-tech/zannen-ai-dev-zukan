@@ -1,0 +1,3 @@
+#!/bin/sh
+# commit の前に、公開してはいけない情報が入っていないか調べる。止まったら commit しない
+node publish-check.mjs --staged || exit 1

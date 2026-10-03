@@ -1,0 +1,3 @@
+#!/bin/sh
+# push の前に、全ファイルと全コミット（メッセージ・作者）をもう一度調べる
+node publish-check.mjs --push || exit 1

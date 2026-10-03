@@ -1,0 +1,21 @@
+# GitHub 側の検査。手元の検査（.githooks）を飛ばされても、ここで止める
+name: publish-check
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0            # 全履歴を調べるため
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 公開前チェック（決まった形だけ）
+        run: node publish-check.mjs --ci
+      - name: 秘密の検出（gitleaks・全履歴）
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
