@@ -62,8 +62,9 @@ if (mode === '--staged') {
 } else if (mode === '--msg') {
   scanText('コミットメッセージ', fs.readFileSync(process.argv[3], 'utf8'));
 } else if (mode === '--push' || mode === '--ci') {
-  const files = git('ls-files').split('\n').filter(Boolean);
-  scanFiles(files, f => fs.readFileSync(f, 'utf8'));
+  // 作業中のファイルではなく、実際に push される中身（最新の commit）を読む
+  const files = git('ls-tree', '-r', '--name-only', 'HEAD').split('\n').filter(Boolean);
+  scanFiles(files, f => git('show', `HEAD:${f}`));
   const log = git('log', '--format=%H%x1f%an%x1f%ae%x1f%cn%x1f%ce%x1f%B%x1e');
   for (const rec of log.split('\x1e').map(s => s.trim()).filter(Boolean)) {
     const [h, an, ae, cn, ce, body] = rec.split('\x1f');

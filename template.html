@@ -56,9 +56,14 @@ h1 .z{background:linear-gradient(transparent 58%,var(--yellow) 58%);padding-inli
 section.group{margin-top:36px;scroll-margin-top:80px}
 section.group h2{font-family:var(--f-display);font-weight:400;font-size:21px;margin:0 0 14px;display:flex;align-items:center;gap:10px}
 section.group h2 small{font-family:var(--f-body);font-size:13px;color:var(--sub)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:12px}
-.spec{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-rows:auto 1fr auto;gap:8px;min-width:0;
-  background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px}
+.spec{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-rows:auto auto 1fr auto;gap:8px;min-width:0;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0 14px 14px;overflow:hidden}
+.pic{display:block;width:calc(100% + 28px);max-width:none;margin-inline:-14px;aspect-ratio:4/3;object-fit:cover;border-bottom:1px solid var(--line)}
+.sheet .pic{width:100%;margin:0;border:1px solid var(--line);border-radius:12px}
+.animal{font-size:13px;color:var(--sub);background:var(--gray-soft);border-radius:8px;padding:8px 10px}
+.animal b{color:var(--ink)}
+.toc .who{font-size:12px;color:var(--sub);margin-left:4px}
 .spec:hover{border-color:var(--ink)}
 .spec:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
 .spec .top{display:flex;align-items:center;gap:8px;color:var(--sub)}
@@ -160,6 +165,7 @@ function render(){
     const xs = shown.filter(e => e.section === sec); if (!xs.length) return '';
     return `<section class="group" id="${secId(sec)}"><h2>${icon(sec)}${esc(sec)}<small>${xs.length}種</small></h2><div class="grid">${xs.map(e =>
       `<button type="button" class="spec${e.tags.includes('古い')?' old':''}" data-no="${e.no}">
+        ${e.pic ? `<img class="pic" src="${e.pic}" alt="" loading="lazy">` : ''}
         <span class="top">${icon(e.section)}<span class="no">${no3(e.no)}</span>${e.tags.includes('検証済')?'<span class="ok">検証済</span>':''}</span>
         <h3>${md(e.title)}</h3>
         <span class="short">${md(e.short || '')}</span>
@@ -175,11 +181,13 @@ function open(no){
     <div class="bar">${icon(e.section)}<span class="no">${no3(e.no)}</span><span>${esc(e.section)}</span>
       ${e.tags.map(t => `<span class="tag ${t==='検証済'?'ok':''}">${esc(t)}</span>`).join('')}
       <span class="tag">${esc(e.label)}</span><span>${esc(e.date)}</span></div>
+    ${e.pic ? `<img class="pic" src="${e.pic}" alt="">` : ''}
     <h3 id="dlgTitle">${md(e.title)}</h3>
     <div class="short">${md(e.short || '')}</div>
     ${f('scene','どんな場面？')}${f('what','何が起きた？')}${f('why','なぜ？')}${f('did','どうした？')}
     ${e.next ? `<div class="field next"><span class="label">次に会ったら</span><p>${md(e.next)}</p></div>` : ''}
-    ${e.hasEvidence ? `<div class="ev">出典：非公開の開発記録（コード・計測ログ）に残っています</div>` : ''}`;
+    ${DATA.animals[e.section] ? `<div class="animal">この分類のいきもの：<b>${esc(DATA.animals[e.section].name)}</b>　${esc(DATA.animals[e.section].why)}</div>` : ''}
+    ${e.hasEvidence ?`<div class="ev">出典：非公開の開発記録（コード・計測ログ）に残っています</div>` : ''}`;
   document.getElementById('prev').disabled = cur <= 0;
   document.getElementById('next').disabled = cur >= shown.length - 1;
   const d = document.getElementById('dlg'); if (!d.open) d.showModal(); d.scrollTop = 0;
@@ -187,7 +195,7 @@ function open(no){
 const total = E.length, ok = E.filter(e => e.tags.includes('検証済')).length;
 document.getElementById('stats').innerHTML = `<span><b>${total}</b>種 収録</span><span><b>${DATA.sections.length}</b>分類</span><span><b>${ok}</b>種 検証済</span>`;
 document.getElementById('toc').innerHTML = DATA.sections.map(sec =>
-  `<li><a href="#${secId(sec)}">${icon(sec)}${esc(sec)}<span class="n">${E.filter(e => e.section === sec).length}種</span></a></li>`).join('');
+  `<li><a href="#${secId(sec)}">${icon(sec)}${esc(sec)}${DATA.animals[sec] ? `<span class="who">（${esc(DATA.animals[sec].name)}）</span>` : ''}<span class="n">${E.filter(e => e.section === sec).length}種</span></a></li>`).join('');
 document.getElementById('foot').textContent = `更新：${DATA.built}`;
 document.getElementById('q').addEventListener('input', render);
 document.getElementById('list').addEventListener('click', ev => { const b = ev.target.closest('.spec'); if (b) open(+b.dataset.no); });

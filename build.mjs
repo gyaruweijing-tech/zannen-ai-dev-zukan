@@ -10,7 +10,9 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { ANIMALS } from './illust/parts.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PRIVATE = path.join(os.homedir(), '.zukan-private', 'zukan-private.json');
@@ -73,7 +75,17 @@ const LABEL = { '全般': 'どの開発でも', 'ai-dev-zukan': 'この図鑑づ
 const label = p => LABEL[p] || '開発中の3Dゲーム';
 const pub = entries.map(({ no, date, tags, title, short, section, scene, what, why, did, next, evidence, project }) =>
   ({ no, date, tags, title, short, section, scene, what, why, did, next, hasEvidence: !!evidence, label: label(project) }));
-const data = { entries: pub, sections, built };
+// カードの絵（illust/out/ の SVG）。見出しから作ったファイル名で探す（illust/render.mjs の fileOf と同じ計算）
+const svgOf = title => path.join(HERE, 'illust', 'out', crypto.createHash('sha1').update(title).digest('hex').slice(0, 10) + '.svg');
+let noPic = 0;
+for (const e of pub) {
+  const f = svgOf(e.title);
+  if (fs.existsSync(f)) e.pic = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(fs.readFileSync(f, 'utf8'));
+  else { noPic++; warn.push(`  No.${e.no} 絵が無い（illust/scenes.json に足して node illust/render.mjs）: ${e.title}`); }
+}
+// 分類ごとの動物と理由（図鑑に載る）
+const animals = Object.fromEntries(Object.values(ANIMALS).map(a => [a.section, { name: a.name, why: a.why }]));
+const data = { entries: pub, sections, animals, built };
 
 const tpl = fs.readFileSync(path.join(HERE, 'template.html'), 'utf8');
 const page = tpl.replace('/*__DATA__*/null', JSON.stringify(data).replace(/</g, '\\u003c'));
