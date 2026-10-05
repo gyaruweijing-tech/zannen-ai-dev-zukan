@@ -243,6 +243,11 @@ export const PROPS = {
   key: (x, y) => `<circle cx="${x}" cy="${y}" r="8" fill="${ACCENT}" ${L(W2)}/><path d="M${x + 8} ${y} h22 m-6 0 v6 m-6 -6 v5" fill="none" ${L(W2 + .5)}/>`,
   mail: (x, y, w = 40, h = 28) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="#fff" ${L(W2)}/><path d="M${x} ${y} l${w / 2} ${h * .55} l${w / 2} -${h * .55}" fill="none" ${L(W2)}/>`,
   flag: (x, y, accent = true) => `<path d="M${x} 152 V${y}" ${L()}/><path d="M${x} ${y} h28 l-6 9 l6 9 h-28 z" fill="${accent ? ACCENT : '#fff'}" ${L(W2)}/>`,
+  // 抜けたコード：手元 (x1,y1) から床をはって x2 のプラグまで
+  cord: (x1, y1, x2) => `<path d="M${x1} ${y1} C${x1 + 6} 150 ${(x1 + x2) / 2} 158 ${x2} 148" fill="none" ${L(W2)}/>`,
+  plug: (x, y, accent = true) => `<rect x="${x}" y="${y - 8}" width="16" height="16" rx="4" fill="${accent ? ACCENT : '#fff'}" ${L(W2)}/><path d="M${x + 16} ${y - 4} h7 M${x + 16} ${y + 4} h7" ${L(W2)}/>`,
+  outlet: (x, y) => `<rect x="${x - 12}" y="${y - 16}" width="24" height="32" rx="5" fill="#fff" ${L(W2)}/><path d="M${x - 4} ${y - 6} v6 M${x + 4} ${y - 6} v6" ${L(W2 + .5)}/>`,
+  bowl: (x, accent = true) => `<path d="M${x - 18} 138 h36 l-5 14 h-26 z" fill="${accent ? ACCENT : '#fff'}" ${L(W2)}/><path d="M${x - 18} 138 q18 6 36 0" fill="none" ${L(1.4)} opacity=".5"/>`,
   seed: (x, y) => `<ellipse cx="${x}" cy="${y}" rx="5" ry="7" fill="${ACCENT}" ${L(1.5)}/>`,
 };
 
