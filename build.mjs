@@ -66,10 +66,13 @@ function parse(file, where, inbox) {
 }
 
 const entries = parse(path.join(HERE, 'LEARNED.md'), 'LEARNED.md');
-entries.forEach((e, i) => e.no = i + 1);
+// 番号は「載った順」（日付の古い順。同じ日なら原本の上から）。種の途中に足しても、前からある件の番号は変わらない
+[...entries].map((e, i) => [e, i]).sort((a, b) => a[0].date.localeCompare(b[0].date) || a[1] - b[1]).forEach(([e], i) => e.no = i + 1);
+const byNo = new Map(entries.map(e => [e.no, e]));
 
 // 清書待ち（受け箱＋下書き）。数えるだけ
-const known = new Set(entries.map(e => e.title));
+// 清書済みの見出し：原本にある見出しと、清書で見出しを書き直した受け箱の元の見出し（zukan-private.json の cleaned）
+const known = new Set([...entries.map(e => e.title), ...(cfg.cleaned || [])]);
 const waiting = [];
 for (const b of cfg.inboxes || []) {
   if (fs.existsSync(b.path)) waiting.push(...parse(b.path, `受け箱（${b.alias}）`, b.alias).filter(e => !known.has(e.title)));
@@ -113,7 +116,7 @@ const kinOf = e => (e.kin || '').split(/\s*／\s*/).filter(Boolean).map(t => {
   if (!noOf.has(t)) warn.push(`  ${e.where} なかまが見つからない: ${t}`);
   return noOf.get(t);
 }).filter(Boolean);
-const pub = entries.map(e => ({
+const pub = [...entries].sort((a, b) => a.no - b.no).map(e => ({
   no: e.no, sp: e.sp, date: e.date, tags: e.tags, title: e.title, short: e.short, section: e.section,
   scene: e.scene, guess: e.guess, what: e.what, why: e.why, found: e.found, after: e.after, next: e.next,
   kin: kinOf(e), app: APPS[e.project]?.about || '', hasEvidence: !!e.evidence, label: APPS[e.project]?.label || 'ある開発',
@@ -154,7 +157,7 @@ for (const sec of sections) {
   for (const s of pubSpecies.filter(x => x.section === sec)) {
     idx += `\n### ${s.name} — ${s.summary}${s.promo ? `（昇格: ${s.promo}）` : ''}\n`;
     for (const n of s.nos) {
-      const e = entries[n - 1], old = e.tags.includes('古い') ? '~~' : '';
+      const e = byNo.get(n), old = e.tags.includes('古い') ? '~~' : '';
       idx += `- ${old}${e.title}${old} — ${e.short} [${e.project}・${e.tags.join('・')}] → ${e.where}\n`;
     }
   }
@@ -170,9 +173,26 @@ if (waiting.length) {
 } else console.log('清書待ち: 0件');
 // 昇格の候補：まだ昇格していない種のうち、目撃例3件以上で2つ以上のアプリ（全般を含む）にまたがるもの／[再発] の目撃例がある種
 // （1つのアプリでだけ何度も起きた種は、そのアプリの事情かもしれないので、まだ候補にしない）
-const appsOf = s => new Set(s.nos.map(n => entries[n - 1].project)).size;
+const appsOf = s => new Set(s.nos.map(n => byNo.get(n).project)).size;
 const cand = pubSpecies.filter(s => !s.promo && s.nos.length >= 3 && appsOf(s) >= 2).map(s => `  ${s.name}（${s.nos.length}件・${appsOf(s)}アプリ）`);
-const again = pubSpecies.filter(s => s.nos.some(n => entries[n - 1].tags.includes('再発'))).map(s => `  ${s.name}${s.promo ? '（昇格済みなのに再発 → 一段強い形へ）' : ''}`);
+const again = pubSpecies.filter(s => s.nos.some(n => byNo.get(n).tags.includes('再発'))).map(s => `  ${s.name}${s.promo ? '（昇格済みなのに再発 → 一段強い形へ）' : ''}`);
 if (again.length) console.log(`再発のある種 ${again.length}:\n${again.join('\n')}`);
 console.log(`昇格の候補（3件以上・2アプリ以上・未昇格）${cand.length}種${cand.length ? ':\n' + cand.join('\n') : ''}`);
+// 運用の黄信号（意味と直し方は OPERATIONS.md）。★基準の値はここにだけ書く。どれも根拠の無い仮の値で、見直しで直す
+const RULES = { reviewDays: 30, staleDraftDays: 14, quietDays: 30, maxSpecies: 40, maxSingleRatio: 0.3 };
+const daysSince = d => Math.floor((Date.now() - new Date(d + 'T00:00:00+09:00')) / 864e5);
+const yellow = [];
+const opsFile = path.join(HERE, 'OPERATIONS.md');
+const reviewed = fs.existsSync(opsFile) && fs.readFileSync(opsFile, 'utf8').match(/最終見直し:\s*(\d{4}-\d{2}-\d{2})/)?.[1];
+if (!reviewed) yellow.push('OPERATIONS.md に「最終見直し: 日付」が無い');
+else if (daysSince(reviewed) >= RULES.reviewDays) yellow.push(`運用の見直しの時期（前回 ${reviewed}・${daysSince(reviewed)}日前）→ OPERATIONS.md の「直す」`);
+const newest = entries.map(e => e.date).sort().at(-1);
+const oldestWait = waiting.map(e => e.date).sort()[0];
+if (oldestWait && daysSince(oldestWait) >= RULES.staleDraftDays) yellow.push(`清書が回っていない（いちばん古い清書待ちが ${daysSince(oldestWait)}日前）`);
+if (!waiting.length && daysSince(newest) >= RULES.quietDays) yellow.push(`${daysSince(newest)}日、新しい目撃例も下書きも無い → 書き漏れを疑う`);
+if (pubSpecies.length > RULES.maxSpecies) yellow.push(`種が${pubSpecies.length}種（目安 ${RULES.maxSpecies}）→ 似た種を合わせる`);
+const single = pubSpecies.filter(s => s.nos.length === 1).length;
+if (single / pubSpecies.length > RULES.maxSingleRatio) yellow.push(`1件だけの種が${single}種（${Math.round(single / pubSpecies.length * 100)}%）→ 種が細かすぎ`);
+if (pubSpecies.some(s => s.promo && s.nos.some(n => byNo.get(n).tags.includes('再発')))) yellow.push('昇格済みの種で再発がある（上の一覧）→ 一段強い形へ');
+console.log(yellow.length ? `運用の黄信号 ${yellow.length}:\n${yellow.map(y => '  ' + y).join('\n')}` : '運用の黄信号: なし');
 if (warn.length) { console.log(`警告 ${warn.length}件:\n${warn.join('\n')}`); process.exitCode = 1; }

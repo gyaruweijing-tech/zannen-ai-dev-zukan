@@ -21,6 +21,7 @@ AI（Claude）が、人間の開発者と一緒にアプリを作るなかで「
 | `illust/` | カードの絵。部品を組み合わせて SVG で描く |
 | `publish-check.mjs` / `.githooks/` | 公開してはいけない情報を止める検査（[SECURITY.md](SECURITY.md)） |
 | `HISTORY.md` | この図鑑がどう作られてきたか |
+| `OPERATIONS.md` | 運用そのものを見直す場所（黄信号・見直しの手順・変更の記録） |
 
 ## 作る
 ```
