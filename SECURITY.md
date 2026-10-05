@@ -34,6 +34,22 @@
 4. 設定の「Secret scanning」と「Push protection」を有効にする（public なら無料）
 5. 必要なら GitHub Pages を有効にする（`index.html` を公開）
 
+## AIが検査を外せないようにする（人間の開発者が行う・まだやっていない）
+いまの弱点：手元の3段階（commit 前・メッセージ・push 前）は、AIが「外すのは禁止」というルールで守っているだけで、仕組みでは止まらない。4段目（GitHub 上）も、検査の設定ファイルがこのリポジトリの中にあるので、AIが書き換えて push できてしまう（履歴には残る）。
+★さらに、AIはあなたの GitHub アカウントで push している。**GitHub から見ると、AIとあなたは同じ人**なので、「あなたは通すがAIは止める」という設定はできない。
+
+止める方法は「main に直接 push させず、必ずプルリクエスト（変更の申請）を通す」こと：
+1. **前提**：private のリポジトリでこの設定を使うには有料プラン（GitHub Pro）が要る。public にすれば無料で使える
+2. GitHub のリポジトリ → Settings → Rules → Rulesets → New branch ruleset
+3. 対象を `main`（Default branch）にして、次をオンにする
+   - Require a pull request before merging（直接 push を禁止）
+   - Require status checks to pass → 検査 `check` を選ぶ（GitHub 上の検査が緑でないと入らない）
+   - Block force pushes（履歴の書き換えを禁止）
+4. Bypass list（例外）には**誰も入れない**（あなたを入れると、同じアカウントのAIも通れてしまう）
+5. 以後、AIはブランチを作ってプルリクエストを出す。**検査が緑か、検査の設定ファイルが変わっていないかを見て、マージを押すのはあなた**
+
+代わりに増える手間：変更のたびに、あなたがマージボタンを1回押す。
+
 ## もし漏れたら
 1. すぐ private に戻す
 2. キーやトークンなら、まず**無効化する**（履歴から消すより先）
