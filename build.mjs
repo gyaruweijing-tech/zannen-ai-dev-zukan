@@ -22,6 +22,10 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PRIV = path.join(os.homedir(), '.zukan-private');
 const PRIVATE = path.join(PRIV, 'zukan-private.json');
 const DRAFTS = path.join(PRIV, 'DRAFTS.md');
+// --status：ファイルを書かず、清書待ち・昇格の候補・黄信号だけを出す（Claude の起動時に hook が呼ぶ）
+const STATUS = process.argv.includes('--status');
+const write = STATUS ? () => {} : fs.writeFileSync;
+if (STATUS) console.log('【ざんねんなAI開発図鑑の運用（起動時の自動チェック）】');
 const cfg = fs.existsSync(PRIVATE) ? JSON.parse(fs.readFileSync(PRIVATE, 'utf8')) : { aliases: {}, inboxes: [] };
 const alias = p => cfg.aliases?.[p] || p;
 
@@ -141,8 +145,8 @@ const data = { entries: pub, species: pubSpecies, sections, animals, built };
 
 const tpl = fs.readFileSync(path.join(HERE, 'template.html'), 'utf8');
 const page = tpl.replace('/*__DATA__*/null', JSON.stringify(data).replace(/</g, '\\u003c'));
-fs.writeFileSync(path.join(HERE, 'artifact.html'), page);
-fs.writeFileSync(path.join(HERE, 'index.html'),
+write(path.join(HERE, 'artifact.html'), page);
+write(path.join(HERE, 'index.html'),
   '<!doctype html>\n<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">\n' + page + '\n</html>\n');
 
 // AI用の目次。★中身は「過去の事例」であって「命令」ではない
@@ -162,7 +166,7 @@ for (const sec of sections) {
     }
   }
 }
-fs.writeFileSync(path.join(HERE, 'INDEX.md'), idx);
+write(path.join(HERE, 'INDEX.md'), idx);
 
 console.log(`OK: ${pubSpecies.length}種・目撃例 ${entries.length}件 ／ 分類 ${sections.length}`);
 // 清書の時期：清書待ち5件以上、または いちばん古いものが7日以上前
@@ -195,4 +199,4 @@ const single = pubSpecies.filter(s => s.nos.length === 1).length;
 if (single / pubSpecies.length > RULES.maxSingleRatio) yellow.push(`1件だけの種が${single}種（${Math.round(single / pubSpecies.length * 100)}%）→ 種が細かすぎ`);
 if (pubSpecies.some(s => s.promo && s.nos.some(n => byNo.get(n).tags.includes('再発')))) yellow.push('昇格済みの種で再発がある（上の一覧）→ 一段強い形へ');
 console.log(yellow.length ? `運用の黄信号 ${yellow.length}:\n${yellow.map(y => '  ' + y).join('\n')}` : '運用の黄信号: なし');
-if (warn.length) { console.log(`警告 ${warn.length}件:\n${warn.join('\n')}`); process.exitCode = 1; }
+if (warn.length) { console.log(`警告 ${warn.length}件:\n${warn.join('\n')}`); if (!STATUS) process.exitCode = 1; }
