@@ -5,7 +5,7 @@
 /* 図鑑：白い紙に標本カードを並べる。表紙の黄色を1色だけ。カードを押すと標本の解説ページが開く */
 :root{
   --paper:#fbfbf8; --card:#ffffff; --ink:#22262e; --sub:#5f6672; --line:#e2e0d6;
-  --yellow:#f5c400; --yellow-soft:#fff5c2; --leaf:#2f8f5b; --leaf-soft:#e2f3e9; --gray-soft:#eef0f3;
+  --yellow:#f5c400; --yellow-soft:#fff5c2; --red:#a3271c; --red-soft:#fde3e1; --leaf:#2f8f5b; --leaf-soft:#e2f3e9; --gray-soft:#eef0f3;
   --shade:rgba(20,22,28,.45);
   --f-display:"Dela Gothic One","Hiragino Sans","Yu Gothic",sans-serif;
   --f-body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;
@@ -13,10 +13,10 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --paper:#1a1c21; --card:#23262c; --ink:#eceae4; --sub:#a9aeb7; --line:#373b43;
-  --yellow:#f5c400; --yellow-soft:#3a3214; --leaf:#6fd09a; --leaf-soft:#1e3a2a; --gray-soft:#2c3038; --shade:rgba(0,0,0,.6); color-scheme:dark}}
+  --yellow:#f5c400; --yellow-soft:#3a3214; --red:#ff9b8f; --red-soft:#3d1f1c; --leaf:#6fd09a; --leaf-soft:#1e3a2a; --gray-soft:#2c3038; --shade:rgba(0,0,0,.6); color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#1a1c21; --card:#23262c; --ink:#eceae4; --sub:#a9aeb7; --line:#373b43;
-  --yellow:#f5c400; --yellow-soft:#3a3214; --leaf:#6fd09a; --leaf-soft:#1e3a2a; --gray-soft:#2c3038; --shade:rgba(0,0,0,.6); color-scheme:dark}
+  --yellow:#f5c400; --yellow-soft:#3a3214; --red:#ff9b8f; --red-soft:#3d1f1c; --leaf:#6fd09a; --leaf-soft:#1e3a2a; --gray-soft:#2c3038; --shade:rgba(0,0,0,.6); color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.75;margin:0}
 .wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:24px 64px}
@@ -50,6 +50,13 @@ h1 .z{background:linear-gradient(transparent 58%,var(--yellow) 58%);padding-inli
 .btn:hover:not(:disabled){background:var(--yellow);color:#22262e}
 .btn:disabled{opacity:.35;cursor:default}
 .count{font-size:13px;color:var(--sub);width:100%}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+.tabs button{border:2px solid var(--line);background:var(--card);border-radius:999px;padding:2px 12px;font-size:13px}
+.tabs button[aria-pressed="true"]{border-color:var(--ink);background:var(--yellow);color:#22262e;font-weight:700}
+.tag.zure{background:var(--red-soft);color:var(--red);font-weight:700}
+.tag.atari{background:var(--leaf-soft);color:var(--leaf);font-weight:700}
+.tag.open{background:var(--yellow-soft);color:var(--ink);font-weight:700}
+.spec .open{font-size:11px;color:var(--red);font-weight:700}
 .count:empty{display:none}
 
 /* 分類と標本カード */
@@ -108,9 +115,9 @@ footer{margin-top:48px;font-size:12px;color:var(--sub)}
 
 <div class="wrap">
   <header class="cover">
-    <div class="eyebrow">AIが自分で書いた、外れた予想の記録</div>
+    <div class="eyebrow">人とAIの、外れた予想の記録</div>
     <h1><span class="z">ざんねん</span>なAI開発図鑑</h1>
-    <p class="lead">AI（Claude）が人間の開発者と一緒にアプリを作るなかで、予想が外れたこと・遠回りに気づいたことだけを集めました。うまくいった話は載っていません。</p>
+    <p class="lead">AI（Claude）が人間の開発者と一緒にアプリを作るなかで、予想が外れた経験を、エンジニアがバグ票を切るのと同じ形で集めています。「ずれ」は人間の開発者の期待とAIの出したものが食い違ったとき、「当たり」は期待を超えたとき、「落とし穴」はAIが技術的につまずいたときです。</p>
     <div class="stats" id="stats"></div>
   </header>
 
@@ -120,6 +127,7 @@ footer{margin-top:48px;font-size:12px;color:var(--sub)}
       <ol>
         <li>1枚のカードが、1つの「種」（同じ型の失敗）です。黄色い部分が、その種から学んだ「まとめ」です。</li>
         <li>カードを押すと、その種の「目撃例」が並びます。目撃例を押すと、どんな場面で、何が起きて、どう直したかが読めます。</li>
+        <li>目撃例は1件ずつが「票」（ZK-番号）です。受付 → 調査中 → 解決 → 完了と進み、同じ失敗がまた起きると再オープンします。</li>
         <li>登場するのは「AI（わたし）」と「人間の開発者」の2人です。</li>
       </ol>
     </div>
@@ -132,6 +140,7 @@ footer{margin-top:48px;font-size:12px;color:var(--sub)}
   <div class="tools">
     <input id="q" type="search" placeholder="ことばで探す（例：乱数、見えない、検査）" aria-label="ことばで探す">
     <button class="btn" id="rand" type="button">ランダムに1件ひらく</button>
+    <div class="tabs" id="tabs" role="group" aria-label="種類でしぼる"></div>
     <div class="count" id="count"></div>
   </div>
 
@@ -153,7 +162,14 @@ const DATA = /*__DATA__*/null;
 const E = DATA.entries;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const md = s => esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`([^`]+)`/g,'<code>$1</code>');
-const no3 = n => 'No.' + String(n).padStart(3,'0');
+const no3 = n => 'ZK-' + String(n).padStart(3,'0');
+const EN = new Map(E.map(e => [e.no, e])), en = n => EN.get(n);
+const TYPES = ['ずれ','当たり','落とし穴'];
+let type = '';   // 種類のタブ（'' はすべて）
+const nosOf = s => type ? s.nos.filter(n => en(n).type === type) : s.nos;
+const typeTag = t => `<span class="tag ${t==='ずれ'?'zure':t==='当たり'?'atari':''}">${esc(t)}</span>`;
+const stateTag = e => `<span class="tag ${e.state==='完了'||e.state==='解決'?'':'open'}">${esc(e.state)}${e.res?'（'+esc(e.res)+'）':''}</span>`;
+const OPEN = ['受付','調査中','再オープン'];
 const P = {
   ruler:'<rect x="3" y="8" width="18" height="8" rx="1"/><path d="M7 8v3M11 8v4M15 8v3M19 8v2"/>',
   dial:'<circle cx="12" cy="12" r="8"/><path d="M12 12l4-4M12 4v2M4 12h2M18 12h2"/>',
@@ -171,16 +187,16 @@ const secId = sec => 's' + DATA.sections.indexOf(sec);
 const S = DATA.species;
 const spOf = id => S.find(s => s.id === id);
 const n2 = n => '第' + n + '種';
-const pv = (s, q) => q ? s.nos.filter(n => hit(E[n-1], q)).length : 0;
-const hit = (e, q) => [e.title,e.short,e.scene,e.guess,e.what,e.why,e.found,e.after,e.next].join(' ').toLowerCase().includes(q);
+const pv = (s, q) => q ? nosOf(s).filter(n => hit(en(n), q)).length : 0;
+const hit = (e, q) => [e.key,e.title,e.short,e.scene,e.ask,e.guess,e.what,e.why,e.found,e.after,e.next].join(' ').toLowerCase().includes(q);
 
 // いま開いているもの：種（kind 'sp'）か目撃例（kind 'ex'）。前・次は同じ並びの中で動く
 let shownSp = S, view = null;
 function card(s, q){
-  const rep = E[s.rep-1], m = pv(s, q);
+  const rep = en(s.rep), m = pv(s, q), open = nosOf(s).filter(n => OPEN.includes(en(n).state)).length;
   return `<button type="button" class="spec" data-sp="${s.id}">
     ${rep.pic ? `<img class="pic" src="${rep.pic}" alt="" loading="lazy">` : ''}
-    <span class="top">${icon(s.section)}<span class="no">${n2(s.id)}</span><span class="seen">目撃 ${s.nos.length}件</span>${s.promo?'<span class="ok">AIに取り込み済み</span>':''}</span>
+    <span class="top">${icon(s.section)}<span class="no">${n2(s.id)}</span><span class="seen">目撃 ${nosOf(s).length}件</span>${open?`<span class="open">未解決 ${open}</span>`:''}${s.promo?'<span class="ok">AIに取り込み済み</span>':''}</span>
     <h3>${md(s.name)}</h3>
     <span class="short">${md(s.summary)}</span>
     ${q ? `<span class="match">ことばに合う目撃例 ${m}件</span>` : ''}
@@ -188,19 +204,21 @@ function card(s, q){
 }
 function render(){
   const q = document.getElementById('q').value.trim().toLowerCase();
-  shownSp = !q ? S : S.filter(s => pv(s, q) > 0);
-  const gate = S.filter(s => s.gate);
+  const base = S.filter(s => nosOf(s).length);
+  shownSp = !q ? base : base.filter(s => pv(s, q) > 0);
+  const gate = base.filter(s => s.gate);
+  document.getElementById('tabs').innerHTML = ['',...TYPES].map(t => `<button type="button" data-type="${t}" aria-pressed="${t===type}">${t||'すべて'} ${t?E.filter(e=>e.type===t).length:E.length}</button>`).join('');
   const head = !q && gate.length ? `<section class="group gate" id="gate"><h2>まずはこの10種<small>はじめての人はここから</small></h2><div class="grid">${gate.map(s => card(s)).join('')}</div></section>` : '';
   document.getElementById('list').innerHTML = shownSp.length ? head + DATA.sections.map(sec => {
     const xs = shownSp.filter(s => s.section === sec); if (!xs.length) return '';
     return `<section class="group" id="${secId(sec)}"><h2>${icon(sec)}${esc(sec)}<small>${xs.length}種</small></h2><div class="grid">${xs.map(s => card(s, q)).join('')}</div></section>`;
-  }).join('') : '<p class="empty">見つかりませんでした。ことばを短くしてみてください。</p>';
+  }).join('') : `<p class="empty">${!q && type ? `「${esc(type)}」の票はまだありません。` : '見つかりませんでした。ことばを短くしてみてください。'}</p>`;
   const m = q ? shownSp.reduce((a, s) => a + pv(s, q), 0) : 0;
   document.getElementById('count').textContent = q ? `${shownSp.length}種・目撃例 ${m}件が見つかりました` : '';
 }
 function show(){
   const d = document.getElementById('dlg'); if (!d.open) d.showModal(); d.scrollTop = 0;
-  const L = view.kind === 'sp' ? shownSp : spOf(E[view.no-1].sp).nos;
+  const L = view.kind === 'sp' ? shownSp : nosOf(spOf(en(view.no).sp));
   const i = view.kind === 'sp' ? L.indexOf(spOf(view.id)) : L.indexOf(view.no);
   document.getElementById('prev').disabled = i <= 0;
   document.getElementById('next').disabled = i >= L.length - 1;
@@ -210,49 +228,53 @@ function show(){
 const animal = sec => DATA.animals[sec] ? `<div class="animal">この分類のいきもの：<b>${esc(DATA.animals[sec].name)}</b>　${esc(DATA.animals[sec].why)}</div>` : '';
 function openSp(id){
   if (!shownSp.includes(spOf(id))) shownSp = S;
-  const s = spOf(id), rep = E[s.rep-1]; view = { kind: 'sp', id };
+  const s = spOf(id), rep = en(s.rep); view = { kind: 'sp', id };
   document.getElementById('sheet').innerHTML = `
-    <div class="bar">${icon(s.section)}<span class="no">${n2(s.id)}</span><span>${esc(s.section)}</span><span class="tag">目撃 ${s.nos.length}件</span></div>
+    <div class="bar">${icon(s.section)}<span class="no">${n2(s.id)}</span><span>${esc(s.section)}</span><span class="tag">目撃 ${nosOf(s).length}件</span></div>
     ${rep.pic ? `<img class="pic" src="${rep.pic}" alt="">` : ''}
     <h3 id="dlgTitle">${md(s.name)}</h3>
     <div class="short">${md(s.summary)}</div>
     ${s.promo ? `<div class="field promo"><span class="label">AIに取り込み済み（${esc((s.promo.match(/^\[(.+?)\]/)||[,''])[1])}）</span><p>${md(s.promo.replace(/^\[.+?\]\s*/,''))}</p></div>` : ''}
     <div class="field"><span class="label">目撃例（押すと、どんな場面で何が起きたかが読めます）</span>
-      <div class="exs">${s.nos.map(n => { const e = E[n-1]; return `<button type="button" class="ex" data-no="${n}"><span class="no">${no3(n)}</span><b>${md(e.title)}</b><span>${md(e.short||'')}</span></button>`; }).join('')}</div></div>
+      <div class="exs">${nosOf(s).map(n => { const e = en(n); return `<button type="button" class="ex" data-no="${n}"><span class="no">${no3(n)}　${esc(e.type)}・${esc(e.state)}</span><b>${md(e.title)}</b><span>${md(e.short||'')}</span></button>`; }).join('')}</div></div>
     ${animal(s.section)}`;
   show();
 }
 function openEx(no){
-  const e = E[no-1], s = spOf(e.sp); view = { kind: 'ex', no };
+  const e = en(no), s = spOf(e.sp); view = { kind: 'ex', no };
+  const zure = e.type !== '落とし穴';
+  const links = (k, l) => e[k] && e[k].length ? `<div class="field"><span class="label">${l}</span><p>${e[k].map(n => `<button type="button" class="kin" data-no="${n}">${no3(n)} ${esc(en(n).title)}</button>`).join('')}</p></div>` : '';
   const f = (k, l) => e[k] ? `<div class="field"><span class="label">${l}</span><p>${md(e[k])}</p></div>` : '';
   document.getElementById('sheet').innerHTML = `
     <button type="button" class="back" data-sp="${s.id}">← ${n2(s.id)}「${esc(s.name)}」にもどる</button>
-    <div class="bar">${icon(e.section)}<span class="no">${no3(e.no)}</span><span>${esc(e.section)}</span>
+    <div class="bar">${icon(e.section)}<span class="no">${no3(e.no)}</span>${typeTag(e.type)}${stateTag(e)}<span>${esc(e.section)}</span>
       ${e.tags.map(t => `<span class="tag ${t==='検証済'?'ok':''}">${esc(t)}</span>`).join('')}
       <span class="tag">${esc(e.label)}</span><span>${esc(e.date)}</span></div>
     ${e.pic ? `<img class="pic" src="${e.pic}" alt="">` : ''}
     <h3 id="dlgTitle">${md(e.title)}</h3>
     <div class="short">${md(e.short || '')}</div>
     ${e.app ? `<div class="animal"><b>このアプリ</b>　${esc(e.app)}</div>` : ''}
-    ${f('scene','どんな場面？')}${f('guess','AIの予想（最初はこう考えていた）')}${f('what','実際に起きたこと')}${f('why','なぜ？')}${f('found','どうやって気づいた？')}${f('after','その後')}
-    ${e.kin && e.kin.length ? `<div class="field"><span class="label">なかま（つながっている失敗）</span><p>${e.kin.map(n => `<button type="button" class="kin" data-no="${n}">${no3(n)} ${esc(E[n-1].title)}</button>`).join('')}</p></div>` : ''}
+    ${f('scene','どんな場面？')}${f('ask','頼み方（人間の開発者がどう頼んだか）')}${f('guess', zure ? '期待（人間の開発者が思っていたこと）' : 'AIの予想（最初はこう考えていた）')}${f('what', zure ? '実際（AIが出してきたもの）' : '実際に起きたこと')}${f('stage','ずれた工程')}${f('severity','重大度（手戻りの量）')}${f('why','なぜ？')}${f('found','どうやって気づいた？')}${f('after','その後')}
+    ${links('cause','原因になった票')}${links('kin','なかま（関連する票）')}
     ${e.next ? `<div class="field next"><span class="label">次に会ったら</span><p>${md(e.next)}</p></div>` : ''}
+    ${f('reporter','見つけた人')}${f('log','履歴')}
     ${animal(e.section)}
     ${e.hasEvidence ?`<div class="ev">出典：非公開の開発記録（コード・計測ログ）に残っています</div>` : ''}`;
   show();
 }
 function step(d){
   if (view.kind === 'sp') { const i = shownSp.indexOf(spOf(view.id)); openSp(shownSp[i+d].id); }
-  else { const L = spOf(E[view.no-1].sp).nos; openEx(L[L.indexOf(view.no)+d]); }
+  else { const L = nosOf(spOf(en(view.no).sp)); openEx(L[L.indexOf(view.no)+d]); }
 }
 const ok = E.filter(e => e.tags.includes('検証済')).length;
-document.getElementById('stats').innerHTML = `<span><b>${S.length}</b>種</span><span><b>${E.length}</b>件の目撃例</span><span><b>${DATA.sections.length}</b>分類</span><span><b>${ok}</b>件 検証済</span>`;
+document.getElementById('stats').innerHTML = `<span><b>${S.length}</b>種</span><span><b>${E.length}</b>件の票</span>${TYPES.map(t => `<span><b>${E.filter(e=>e.type===t).length}</b>${t}</span>`).join('')}<span><b>${DATA.sections.length}</b>分類</span><span><b>${ok}</b>件 検証済</span>`;
 document.getElementById('toc').innerHTML = DATA.sections.map(sec =>
   `<li><a href="#${secId(sec)}">${icon(sec)}${esc(sec)}${DATA.animals[sec] ? `<span class="who">（${esc(DATA.animals[sec].name)}）</span>` : ''}<span class="n">${S.filter(s => s.section === sec).length}種</span></a></li>`).join('');
 document.getElementById('foot').textContent = `更新：${DATA.built}`;
 document.getElementById('q').addEventListener('input', render);
+document.getElementById('tabs').addEventListener('click', ev => { const b = ev.target.closest('button'); if (b) { type = b.dataset.type; render(); } });
 document.getElementById('list').addEventListener('click', ev => { const b = ev.target.closest('.spec'); if (b) openSp(+b.dataset.sp); });
-document.getElementById('rand').onclick = () => openEx(E[Math.floor(Math.random()*E.length)].no);
+document.getElementById('rand').onclick = () => { const L = type ? E.filter(e => e.type === type) : E; if (L.length) openEx(L[Math.floor(Math.random()*L.length)].no); };
 document.getElementById('prev').onclick = () => step(-1);
 document.getElementById('next').onclick = () => step(1);
 document.getElementById('close').onclick = () => document.getElementById('dlg').close();
