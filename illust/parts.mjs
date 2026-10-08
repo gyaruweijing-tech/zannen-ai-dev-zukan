@@ -20,6 +20,8 @@ export const ANIMALS = {
   otter:     { name: 'ラッコ',     section: '作業の段取りと道具',           why: '石を道具にして貝を割る動物。道具と段取りの分類だから', bg: '#eaf2f6', body: '#7a5c46', dark: '#47352a', light: '#f1e6d6' },
   ant:       { name: 'アリ',       section: '自動実行・ほかのAIと組む',     why: '群れで仕事を分け合う動物。ほかと組んで働く分類だから', bg: '#f6f2e8', body: '#9b3d2c', dark: '#5c2218', light: '#e9a993' },
   owl:       { name: 'フクロウ',   section: 'この図鑑を作りながら',         why: '森の物知りとされる鳥。この図鑑そのものを作る話の分類だから', bg: '#f0eef6', body: '#9b7653', dark: '#5a4330', light: '#f2e4c9' },
+  parrot:    { name: 'オウム',     section: '認識のずれ',                   why: '言葉をそっくりまねるのに、意味までは分かっていない鳥。言葉は届いたのに意味がずれる分類だから', bg: '#fdf0ec', body: '#d9583f', dark: '#2f6fa8', light: '#fbf1e2' },
+  cat:       { name: 'ネコ',       section: '当たり',                       why: '片手を上げて福を招く動物（招き猫）。期待を超えた当たりが集まる分類だから', bg: '#fdf6e9', body: '#fffaf3', dark: '#e0893a', light: '#f6c9bd' },
 };
 export const animalOf = section => Object.keys(ANIMALS).find(k => ANIMALS[k].section === section);
 
@@ -135,6 +137,35 @@ function owl({ x = 95, face = 'smug', arm = 'down' }) {
     (face === 'worried' ? `<path d="M${x - 24} 64 l10 4 M${x + 24} 64 l-10 4" ${L(W2)}/>` : '');
 }
 
+// オウム：この鳥だけの特徴は「下に曲がった太いくちばし」。顔のまわりは白い（コンゴウインコ風）。頭に短い冠羽
+function parrot({ x = 95, face = 'smug', arm = 'down' }) {
+  const c = ANIMALS.parrot;
+  const wing = s => `<ellipse cx="${x + s * 29}" cy="122" rx="10" ry="21" transform="rotate(${s * -12} ${x + s * 29} 122)" fill="${c.dark}" ${L(W2)}/>`;
+  const wingOut = `<path d="M${x + 24} 112 Q${x + 36} 104 ${x + 42} 100" fill="none" ${L(13)}/><path d="M${x + 24} 112 Q${x + 36} 104 ${x + 42} 100" fill="none" stroke="${c.dark}" stroke-width="8" stroke-linecap="round"/>`;
+  const tail = `<path d="M${x - 8} 146 l-6 6 h28 l-6 -6 z" fill="${c.dark}" ${L(W2)}/>`;
+  const crest = [-8, 0, 8].map(dx => `<ellipse cx="${x + dx}" cy="52" rx="4.5" ry="9" transform="rotate(${dx * 2} ${x + dx} 60)" fill="${c.body}" ${L(W2)}/>`).join('');
+  return tail + `<ellipse cx="${x - 12}" cy="150" rx="8" ry="4.5" fill="${INK}"/><ellipse cx="${x + 12}" cy="150" rx="8" ry="4.5" fill="${INK}"/>` +
+    `<ellipse cx="${x}" cy="124" rx="29" ry="28" fill="${c.body}" ${L()}/>` + wing(-1) + (arm === 'out' ? wingOut : wing(1)) +
+    crest + head(x, c) +
+    `<ellipse cx="${x - 13}" cy="80" rx="11" ry="10" fill="${c.light}"/><ellipse cx="${x + 13}" cy="80" rx="11" ry="10" fill="${c.light}"/>` +
+    eyes(x, 80, face, INK, 13) +
+    `<path d="M${x - 8} 88 Q${x} 82 ${x + 9} 87 Q${x + 13} 97 ${x + 3} 106 Q${x + 4} 97 ${x - 2} 95 Q${x - 8} 94 ${x - 8} 88 Z" fill="${c.light}" ${L(W2)}/>` +
+    `<path d="M${x - 7} 95 q5 4 9 1" fill="none" ${L(1.6)}/>`;
+}
+
+// ネコ（招き猫）：この動物だけの特徴は「とがった三角の耳とひげ」。片手を上げるのが基本の姿
+function cat({ x = 95, face = 'happy', arm = 'up' }) {
+  const c = ANIMALS.cat;
+  const ears = `<path d="M${x - 28} 68 L${x - 24} 42 L${x - 6} 56 Z" fill="${c.body}" ${L()}/><path d="M${x - 24} 62 L${x - 22} 49 L${x - 12} 57 Z" fill="${c.light}"/>
+    <path d="M${x + 28} 68 L${x + 24} 42 L${x + 6} 56 Z" fill="${c.body}" ${L()}/><path d="M${x + 24} 62 L${x + 22} 49 L${x + 12} 57 Z" fill="${c.light}"/>`;
+  const tail = `<path d="M${x - 26} 136 q-24 2 -20 -18" fill="none" ${L(11)}/><path d="M${x - 26} 136 q-24 2 -20 -18" fill="none" stroke="${c.dark}" stroke-width="6" stroke-linecap="round"/>`;
+  return tail + feet(x, c) + body(x, c, false) + arms(x, c, arm) + ears + head(x, c) +
+    `<path d="M${x + 4} 54 Q${x + 26} 56 ${x + 28} 74 Q${x + 14} 72 ${x + 4} 54 Z" fill="${c.dark}"/>` +
+    eyes(x, 80, face, INK) + `<path d="M${x - 4} 88 h8 l-4 4 z" fill="${c.light}" ${L(1.5)}/>` + mouth(x, 97, face) +
+    `<path d="M${x - 12} 90 l-16 -3 M${x - 12} 94 l-16 2 M${x + 12} 90 l16 -3 M${x + 12} 94 l16 2" ${L(1.2)}/>` +
+    `<path d="M${x - 20} 108 q20 8 40 0" fill="none" stroke="#c94b3b" stroke-width="5" stroke-linecap="round"/><circle cx="${x}" cy="113" r="4.5" fill="#fff" ${L(1.5)}/>`;
+}
+
 // ---- 動物（横向き） ----------------------------------------------------------
 function chameleon({ x = 95, face = 'smug', arm = 'down' }) {
   const c = ANIMALS.chameleon;
@@ -167,7 +198,7 @@ function ant({ x = 95, face = 'smug', arm = 'down' }) {
     `<path d="M${x + 34} 108 q4 2 8 -1" fill="none" ${L(W2)}/>`;
 }
 
-export const DRAW = { tanuki, sloth, chameleon, dog, beaver, otter, ant, owl };
+export const DRAW = { tanuki, sloth, chameleon, dog, beaver, otter, ant, owl, parrot, cat };
 
 // ---- 小道具 ----------------------------------------------------------------
 export const PROPS = {
